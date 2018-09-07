@@ -1,0 +1,6 @@
+[package]
+name = "thetis-client"
+version = "0.1.0"
+authors = ["Nathan Ringo <remexre@gmail.com>"]
+
+[dependencies]
