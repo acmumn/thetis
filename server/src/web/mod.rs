@@ -4,27 +4,15 @@ mod middleware;
 mod routes;
 
 use std::net::SocketAddr;
-use std::sync::Arc;
 
 use futures::{
     future::{loop_fn, ok, Loop},
     prelude::*,
 };
-use url::Url;
 use warp::{self, filters::BoxedFilter, http::Response, Filter};
 
-use db::DB;
 pub use web::routes::routes;
-
-/// The values shared by request handlers. Cheaply clonable.
-#[derive(Clone)]
-pub struct HandlerContext {
-    /// The base URL of the site.
-    pub base_url: Arc<Url>,
-
-    /// A pool of connections to the database.
-    pub db: DB,
-}
+use {HandlerContext, DB};
 
 /// A convenient alias.
 type Resp = BoxedFilter<(Response<String>,)>;

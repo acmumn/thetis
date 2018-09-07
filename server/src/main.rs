@@ -19,11 +19,7 @@ use std::sync::Arc;
 
 use failure::Error;
 use structopt::StructOpt;
-use thetis::{
-    util::log_err,
-    web::{serve_on, HandlerContext},
-    DB,
-};
+use thetis::{util::log_err, web::serve_on, HandlerContext, DB};
 use tokio_threadpool::ThreadPool;
 use url::Url;
 

@@ -5,7 +5,9 @@ extern crate serde;
 extern crate serde_derive;
 
 mod auth;
+mod errors;
 mod newtypes;
 
 pub use auth::*;
+pub use errors::*;
 pub use newtypes::*;

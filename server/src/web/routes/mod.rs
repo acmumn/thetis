@@ -2,7 +2,7 @@ mod api;
 
 use warp::{self, filters::BoxedFilter, Filter, Reply};
 
-use web::HandlerContext;
+use HandlerContext;
 
 /// Returns the routes for the application.
 pub fn routes(ctx: HandlerContext) -> BoxedFilter<(impl Reply,)> {

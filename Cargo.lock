@@ -1369,6 +1369,7 @@ dependencies = [
  "lettre 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "lettre_email 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mime 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "pulldown-cmark 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.77 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.77 (registry+https://github.com/rust-lang/crates.io-index)",

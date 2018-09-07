@@ -1,15 +1,18 @@
 //! API routes, which get mounted at `/api`.
 
+use futures::{future::ok, prelude::*};
 use warp::{
     self,
     http::{Response, StatusCode},
-    Filter,
+    Filter, Rejection,
 };
 
+use api;
 use types::AuthCheckRequest;
-use web::{middleware, HandlerContext, Resp};
+use web::{middleware, Resp};
+use HandlerContext;
 
-/// Returns the `/api` routes.
+/// Returns the routes that get mounted at `/api`.
 pub fn routes(ctx: HandlerContext) -> Resp {
     let auth_check = path!("auth" / "check").and(auth_check(ctx.clone()));
     let ping = path!("ping").and(ping(ctx));
@@ -23,10 +26,15 @@ pub fn auth_check(ctx: HandlerContext) -> Resp {
         .and(warp::post2())
         .and(middleware::capabilities(&ctx, &["capabilities.check"]))
         .and(middleware::body())
-        .map(|auth, req: AuthCheckRequest| {
-            //middleware::capabilities(ctx.db.clone(), req.token, req.capabilities)
-            unimplemented!()
+        .and_then(move |auth, req: AuthCheckRequest| {
+            api::auth_check(&ctx, &req.token, &req.capabilities).then(|r| -> Result<_, Rejection> {
+                Ok(match r {
+                    Ok(()) => (StatusCode::OK, json!({ "type": "ok" })),
+                    Err(e) => unimplemented!("{:?}", e),
+                })
+            })
         })
+        .and_then(middleware::serialize)
         .boxed()
 }
 

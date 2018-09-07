@@ -2,17 +2,28 @@
 //! more generic should be preferred to reimplementing their functionality elsewhere. See
 //! `doc/api.md` for details.
 
-/// The `/api/auth/check` route.
-pub fn auth_check() {
-    unimplemented!()
+use futures::{future::ok, prelude::*};
+
+use HandlerContext;
+
+/// The `/api/auth/check` call.
+pub fn auth_check<C>(
+    ctx: &HandlerContext,
+    token: &str,
+    caps: &[C],
+) -> impl Future<Item = (), Error = ()>
+where
+    C: AsRef<str>,
+{
+    ok(unimplemented!())
 }
 
-/// The `/api/auth/login` route.
+/// The `/api/auth/login` call.
 pub fn auth_login() {
     unimplemented!()
 }
 
-/// The `/api/mail/enqueue` route.
+/// The `/api/mail/enqueue` call.
 pub fn mail_enqueue() {
     unimplemented!()
 }
