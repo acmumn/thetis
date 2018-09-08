@@ -14,12 +14,12 @@ extern crate tokio_threadpool;
 extern crate url;
 
 use std::net::{SocketAddr, ToSocketAddrs};
+use std::path::PathBuf;
 use std::process::exit;
-use std::sync::Arc;
 
 use failure::Error;
 use structopt::StructOpt;
-use thetis::{util::log_err, web::serve_on, HandlerContext, DB};
+use thetis::{util::log_err, web::serve_on, Context};
 use tokio_threadpool::ThreadPool;
 use url::Url;
 
@@ -49,12 +49,14 @@ fn run(options: Options) -> Result<(), Error> {
     )?;
     */
 
-    let handler_context = HandlerContext {
-        base_url: Arc::new(options.base_url),
-        db: DB::connect(&options.database_url)?,
-        jwt_secret: Arc::from(options.jwt_secret),
-    };
-    let server = serve_on(serve_addr, handler_context.clone());
+    let context = Context::new(
+        options.base_url,
+        &options.database_url,
+        options.jwt_secret,
+        options.capabilities_file,
+        options.template_dir,
+    )?;
+    let server = serve_on(serve_addr, context.clone());
     let thread_pool = ThreadPool::new();
     thread_pool.spawn(server);
 
@@ -89,6 +91,16 @@ struct Options {
     /// The base URL for unsubscribe links and template examples.
     #[structopt(long = "base-url", env = "BASE_URL")]
     base_url: Url,
+
+    /// The file to load capability rules from.
+    #[structopt(
+        short = "c",
+        long = "caps",
+        env = "CAPABILITIES_FILE",
+        default_value = "capabilities.pl",
+        parse(from_os_str)
+    )]
+    capabilities_file: PathBuf,
 
     /// The URL of the MySQL database.
     #[structopt(long = "db", env = "DATABASE_URL")]
@@ -129,6 +141,12 @@ struct Options {
     /// The syslog server to send logs to.
     #[structopt(short = "s", long = "syslog-server", env = "SYSLOG_SERVER")]
     syslog_server: Option<String>,
+
+    /// The directory to load web templates from.
+    #[structopt(
+        short = "t", long = "templates", env = "TEMPLATE_DIR", default_value = "templates"
+    )]
+    template_dir: String,
 }
 
 impl Options {

@@ -27,6 +27,6 @@ open-docs PKG="thetis": doc
 outdated-deps:
 	cargo outdated -R
 run +ARGS="":
-	cargo run --manifest-path server/Cargo.toml -- {{ARGS}}
+	cd server && cargo run -- {{ARGS}}
 update-schema:
 	diesel print-schema > server/src/db/schema.rs

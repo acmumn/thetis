@@ -1,4 +1,4 @@
-mod capabilities;
+pub mod capabilities;
 
 use std::collections::HashSet;
 
@@ -10,11 +10,11 @@ use futures::{
 use jsonwebtoken::{self, errors::ErrorKind, Algorithm, Validation};
 
 use types::{AuthError, MemberID};
-use HandlerContext;
+use Context;
 
 /// The `/api/auth/check` call.
 pub fn auth_check<I: IntoIterator<Item = String>>(
-    ctx: &HandlerContext,
+    ctx: &Context,
     token: &str,
     caps: I,
 ) -> impl Future<Item = (), Error = Coprod!(AuthError)> {

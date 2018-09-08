@@ -37,11 +37,12 @@ mod macros;
 
 pub mod api;
 mod auth;
+mod context;
 mod db;
-mod handler_context;
+pub mod errors;
 pub mod util;
 pub mod web;
 
 pub use auth::auth_check;
+pub use context::Context;
 pub use db::DB;
-pub use handler_context::HandlerContext;

@@ -16,7 +16,7 @@ use warp::{
 
 use types::AuthError;
 use web::Resp;
-use {auth_check, HandlerContext};
+use {auth_check, Context};
 
 /// A filter that parses a JSON or form body.
 pub fn body<T: DeserializeOwned + Send>() -> impl Filter<Extract = (T,), Error = Rejection> + Copy {
@@ -33,7 +33,7 @@ pub fn body<T: DeserializeOwned + Send>() -> impl Filter<Extract = (T,), Error =
 
 /// A helper to check for capabilities in an `auth` cookie, failing if the cookie is not present.
 pub fn capabilities<C: AsRef<str>, I: IntoIterator<Item = String>>(
-    ctx: &HandlerContext,
+    ctx: &Context,
     auth_cookie: Option<C>,
     caps: I,
 ) -> impl Future<Item = (), Error = Response<String>> {

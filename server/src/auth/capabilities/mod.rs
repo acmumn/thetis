@@ -8,20 +8,47 @@
 //! help with this, though exactly how is nontrivial. (Create a custom stream adaptor?)
 
 mod ast;
-mod cst;
+pub(crate) mod cst;
 mod unify;
 
-lalrpop_mod!(grammar);
+#[cfg(test)]
+mod tests;
+
+pub(crate) mod grammar {
+    lalrpop_mod!(grammar);
+    pub use self::grammar::*;
+}
+
+use std::collections::HashSet;
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
 
 use futures::{future::ok, prelude::*};
 
-use {types::MemberID, HandlerContext};
+pub use auth::capabilities::ast::*;
+use {errors::CapabilitiesLoadError, types::MemberID, Context};
 
 /// Checks if a member currently has a set of capabilities.
 pub fn check<C: AsRef<str>>(
-    ctx: &HandlerContext,
+    ctx: &Context,
     member: MemberID,
     caps: Vec<C>,
 ) -> impl Future<Item = bool, Error = ()> {
     ok(unimplemented!())
+}
+
+/// Loads a capabilities AST from a file.
+pub fn load_capabilities_from(path: impl AsRef<Path>) -> Result<Rules, CapabilitiesLoadError> {
+    let src = {
+        let mut f = File::open(path)?;
+        let mut buf = String::new();
+        f.read_to_string(&mut buf)?;
+        buf
+    };
+
+    let cst = src.parse::<cst::Rules>()?;
+
+    let mut atoms = HashSet::new();
+    Ok(cst.to_ast(&mut atoms))
 }
