@@ -20,17 +20,17 @@ pub fn unify(l: Arc<Term>, r: Arc<Term>) -> Option<Subst> {
 fn unify_helper(l: Arc<Term>, r: Arc<Term>, substs: &mut Subst) -> Option<()> {
     match (&*l, &*r) {
         (&Term::Var(l), _) => {
-            substs.push((l, r));
+            substs.push((l, r.clone()));
             Some(())
         }
         (_, &Term::Var(r)) => {
-            substs.push((r, l));
+            substs.push((r, l.clone()));
             Some(())
         }
-        (&Term::Lit(l @ Lit(_, la)), &Term::Lit(r @ Lit(_, ra))) => {
+        (Term::Lit(l), Term::Lit(r)) => {
             if l.functor() == r.functor() {
-                for (l, r) in la.iter().zip(ra.iter()) {
-                    unify_helper(l, r, substs)?;
+                for (l, r) in l.1.iter().zip(r.1.iter()) {
+                    unify_helper(l.clone(), r.clone(), substs)?;
                 }
                 Some(())
             } else {
@@ -42,5 +42,6 @@ fn unify_helper(l: Arc<Term>, r: Arc<Term>, substs: &mut Subst) -> Option<()> {
         } else {
             None
         },
+        _ => None,
     }
 }

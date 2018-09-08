@@ -11,6 +11,8 @@ mod ast;
 mod cst;
 mod unify;
 
+lalrpop_mod!(grammar);
+
 use futures::{future::ok, prelude::*};
 
 use {types::MemberID, HandlerContext};

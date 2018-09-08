@@ -1,0 +1,87 @@
+use auth::capabilities::cst::*;
+
+grammar;
+
+Atom: String = {
+	r"[a-z][A-Za-z_]*" => <>.to_string(),
+	<s:r"'[^']*'"> => s[1..s.len()-1].to_string(),
+};
+
+pub Clause: Clause = {
+	<h:Lit> ":-" <t:Lits> "." => {
+		let mut t = t;
+		t.reverse();
+		Clause(h, t)
+	}
+};
+
+// Note: Clauses gives the clauses in reverse!
+Clauses: Vec<Clause> = {
+	"" => Vec::new(),
+	Clauses1
+};
+
+// Note: Clauses1 gives the clauses in reverse!
+Clauses1: Vec<Clause> = {
+	<h:Clause> => vec![h],
+	<h:Clause> "," <t:Clauses1> => {
+		let mut t = t;
+		t.push(h);
+		t
+	},
+};
+
+pub Lit: Lit = {
+	<a:Atom> "(" <ts:Terms> ")" => {
+		let mut ts = ts;
+		ts.reverse();
+		Lit(a, ts)
+	},
+};
+
+// Note: Lits gives the literals in reverse!
+Lits: Vec<Lit> = {
+	"" => Vec::new(),
+	Lits1
+};
+
+// Note: Lits1 gives the literals in reverse!
+Lits1: Vec<Lit> = {
+	<h:Lit> => vec![h],
+	<h:Lit> "," <t:Lits1> => {
+		let mut t = t;
+		t.push(h);
+		t
+	},
+};
+
+pub Rules: Rules = {
+	<c:Clauses> => {
+		let mut c = c;
+		c.reverse();
+		Rules(c)
+	}
+};
+
+pub Term: Term = {
+	"_"                 => Term::Any,
+	Lit                 => Term::Lit(<>),
+	r"[+-]?[0-9]+"      => Term::Num(<>.parse().unwrap()),
+	r"[A-Z_][a-zA-Z_]*" => Term::Var(<>.to_string()),
+};
+
+// Note: Terms gives the terms in reverse!
+Terms: Vec<Term> = {
+	"" => Vec::new(),
+	Terms1
+};
+
+// Note: Terms1 gives the terms in reverse!
+Terms1: Vec<Term> = {
+	<h:Term> => vec![h],
+	<h:Term> "," <t:Terms1> => {
+		let mut t = t;
+		t.push(h);
+		t
+	},
+};

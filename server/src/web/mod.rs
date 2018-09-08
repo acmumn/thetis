@@ -9,7 +9,7 @@ use futures::{
     future::{loop_fn, ok, Loop},
     prelude::*,
 };
-use warp::{self, filters::BoxedFilter, http::Response, Filter};
+use warp::{self, filters::BoxedFilter, http::Response};
 
 pub use web::routes::routes;
 use {HandlerContext, DB};

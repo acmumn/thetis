@@ -1,7 +1,11 @@
-use std::sync::Arc;
+use std::collections::HashSet;
+use std::fmt::Display;
 
-use futures::{future::ok, prelude::*};
-use mime::{self, Mime};
+use futures::{
+    future::{err, Either},
+    prelude::*,
+};
+use mime;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json;
 use warp::{
@@ -10,6 +14,7 @@ use warp::{
     Filter, Rejection,
 };
 
+use types::AuthError;
 use web::Resp;
 use {auth_check, HandlerContext};
 
@@ -26,37 +31,47 @@ pub fn body<T: DeserializeOwned + Send>() -> impl Filter<Extract = (T,), Error =
         .unify()
 }
 
-/// A filter to check for capabilities in an `auth` cookie, failing if the cookie is not present.
-pub fn capabilities<C, I>(
+/// A helper to check for capabilities in an `auth` cookie, failing if the cookie is not present.
+pub fn capabilities<C: AsRef<str>, I: IntoIterator<Item = String>>(
     ctx: &HandlerContext,
+    auth_cookie: Option<C>,
     caps: I,
-) -> impl Filter<Extract = ((),), Error = Rejection> + Clone
-where
-    C: AsRef<str> + Clone + Send + Sync,
-    I: IntoIterator<Item = C>,
-{
-    let caps = caps.into_iter().collect::<Vec<C>>();
-    let ctx = ctx.clone();
+) -> impl Future<Item = (), Error = Response<String>> {
+    let fut = if let Some(auth_cookie) = auth_cookie {
+        let caps = caps.into_iter().collect::<HashSet<_>>();
+        Either::A(
+            auth_check(ctx, auth_cookie.as_ref(), caps.clone()).map_err(|e| {
+                match_coproduct!(e, {
+                    err : AuthError => { err }
+                })
+            }),
+        )
+    } else {
+        Either::B(err(AuthError::AuthTokenRequired))
+    };
 
-    warp::cookie("auth").and_then(move |auth: String| {
-        auth_check(&ctx, &auth, caps.clone())
-            .map_err(|e| -> Rejection { unimplemented!("{:?}", e) })
-    })
+    fut.map_err(|err| simple_response(StatusCode::UNAUTHORIZED, err).unwrap())
 }
 
-/// A function that serializes a response code and value to a real response.
-pub fn serialize<T: Serialize>(
-    (code, body): (StatusCode, T),
-) -> impl Future<Item = Response<String>, Error = Rejection> {
+/// A helper for passing to `.map_err` that prints the error and rejects with a server error.
+pub fn log_server_error<T: Display>(t: T) -> Rejection {
+    error!("{}", t);
+    warp::reject::server_error()
+}
+
+/// A helper that serializes a response code and value to a real response.
+pub fn simple_response<T: Serialize>(
+    status: StatusCode,
+    body: T,
+) -> Result<Response<String>, Rejection> {
     // TODO: In theory, this should check on the Accept header, and use that to make decisions.
 
     serde_json::to_string(&body)
-        .map_err(|e| unimplemented!("{:?}", e))
+        .map_err(log_server_error)
         .and_then(|body| {
             Response::builder()
-                .status(code)
+                .status(status)
                 .body(body)
-                .map_err(|e| unimplemented!("{:?}", e))
+                .map_err(log_server_error)
         })
-        .into_future()
 }

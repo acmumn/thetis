@@ -1,26 +1,24 @@
 //! Macros defined here mainly to make other code look pretty.
 
-/// Does a foldr1 with `Filter::or` over the provided expressions.
-macro_rules! foldr1_filter_or {
-    ($e:expr) => { $e };
-    ($h:expr $(,$t:expr)* $(,)*) => {
-        $crate::warp::Filter::or($h, foldr1_filter_or!($($t),*))
-    };
+macro_rules! caps {
+    ($($e:expr),*) => {{
+        let mut set = $crate::std::collections::HashSet::new();
+        $($crate::std::collections::HashSet::insert(&mut set,
+                                                    $crate::std::borrow::ToOwned::to_owned($e));)*
+        set
+    }};
 }
 
-/// Composes several routes with `Filter::or`.
-macro_rules! routes {
-    (in $m:ident; with $ctx:ident; $e:ident $(,)*) => {
-        $crate::web::routes::$m::$e($ctx.clone())
+macro_rules! match_coproduct {
+    ($e:expr, {}) => {
+        match $e {}
     };
-    (in $m:ident; with $ctx:ident; $h:ident $(, $t:ident)* $(,)*) => {
-        $crate::warp::Filter::or(routes!(in $m; with $ctx; $h), routes!(in $m; with $ctx; $($t),*))
-    };
-}
-
-/// Creates a path-based router using `warp::path!`.
-macro_rules! router {
-    (with $ctx:ident; $($base:tt => $m:ident::[$($n:ident $(,)*)*])*) => {
-        foldr1_filter_or!($(routes! { in $m; with $ctx; $($n),* }),*)
+    (
+        $e:expr, { $hi:ident : $ht:ty => $hb:block $(,)* $($ti:ident : $tt:ty => $tb:block $(,)*)* }
+    ) => {
+        match $crate::frunk::Coproduct::uninject::<$ht, _>($e) {
+            Ok($hi) => $hb,
+            Err(e) => match_coproduct!(e, {$($ti : $tt => $tb),*}),
+        }
     };
 }

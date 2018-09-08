@@ -9,9 +9,6 @@ pub struct Rules(pub Vec<Clause>);
 pub struct Clause(pub Lit, pub Vec<Lit>);
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Name(pub Arc<str>);
-
-#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Term {
     Lit(Lit),
     Num(isize),
@@ -26,7 +23,7 @@ impl Term {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Lit(pub Name, pub Vec<Arc<Term>>);
+pub struct Lit(pub Arc<str>, pub Vec<Arc<Term>>);
 
 impl Lit {
     /// Returns the name and arity of the literal.

@@ -9,6 +9,8 @@ extern crate futures;
 extern crate frunk;
 extern crate jsonwebtoken;
 #[macro_use]
+extern crate lalrpop_util;
+#[macro_use]
 extern crate lazy_static;
 extern crate lettre;
 extern crate lettre_email;

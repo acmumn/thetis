@@ -1,13 +1,14 @@
 //! API routes, which get mounted at `/api`.
 
 use futures::{future::ok, prelude::*};
+use serde_json;
 use warp::{
     self,
     http::{Response, StatusCode},
     Filter, Rejection,
 };
 
-use types::AuthCheckRequest;
+use types::{AuthCheckRequest, AuthError};
 use web::{middleware, Resp};
 use {auth_check, HandlerContext};
 
@@ -23,17 +24,26 @@ pub fn routes(ctx: HandlerContext) -> Resp {
 pub fn post_auth_check(ctx: HandlerContext) -> Resp {
     warp::index()
         .and(warp::post2())
-        .and(middleware::capabilities(&ctx, &["capabilities.check"]))
+        .and(warp::cookie::optional("auth"))
         .and(middleware::body())
-        .and_then(move |(), req: AuthCheckRequest| {
-            auth_check(&ctx, &req.token, req.capabilities).then(|r| -> Result<_, Rejection> {
-                Ok(match r {
-                    Ok(()) => (StatusCode::OK, json!({ "type": "ok" })),
-                    Err(e) => unimplemented!("{:?}", e),
+        .and_then(move |auth, req: AuthCheckRequest| {
+            middleware::capabilities(&ctx, auth, caps!["capabilities.check"])
+                .and_then(|()| {
+                    auth_check(&ctx, &req.token, req.capabilities).then(|r| {
+                        let body = match r {
+                            Ok(()) => json!({ "type": "ok" }),
+                            Err(e) => match_coproduct!(e, {
+                                err : AuthError => { serde_json::to_value(err).unwrap() }
+                            }),
+                        };
+                        Ok((StatusCode::OK, body))
+                    })
                 })
-            })
+                .then(|r| match r {
+                    Ok((status, body)) => middleware::simple_response(status, body),
+                    Err(e) => Ok(e),
+                })
         })
-        .and_then(middleware::serialize)
         .boxed()
 }
 

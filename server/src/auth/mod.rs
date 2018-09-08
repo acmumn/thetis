@@ -1,8 +1,8 @@
 mod capabilities;
 
 use std::collections::HashSet;
-use std::iter::FromIterator;
 
+use frunk::Coproduct;
 use futures::{
     future::{err, ok, Either},
     prelude::*,
@@ -13,7 +13,7 @@ use types::{AuthError, MemberID};
 use HandlerContext;
 
 /// The `/api/auth/check` call.
-pub fn auth_check<C: AsRef<str>, I: IntoIterator<Item = C>>(
+pub fn auth_check<I: IntoIterator<Item = String>>(
     ctx: &HandlerContext,
     token: &str,
     caps: I,
@@ -22,33 +22,38 @@ pub fn auth_check<C: AsRef<str>, I: IntoIterator<Item = C>>(
         static ref VALIDATION: Validation = Validation::new(Algorithm::HS512);
     }
 
-    let caps_wanted = caps.into_iter().map(|c| c.as_ref()).collect::<HashSet<_>>();
-    match jsonwebtoken::decode::<Claims>(token, ctx.jwt_secret.as_bytes(), &VALIDATION) {
+    let caps_wanted = caps.into_iter().collect::<HashSet<_>>();
+    let fut = match jsonwebtoken::decode::<Claims>(token, ctx.jwt_secret.as_bytes(), &VALIDATION) {
         Ok(tok) => match tok.claims.inner {
             ClaimsInner::Service { name, caps } => {
-                let caps = caps.into_iter().map(|c| c.as_ref()).collect::<HashSet<_>>();
-                if caps_wanted.is_subset(&caps) {
+                let mut caps_missing = caps_wanted;
+                for cap in &caps {
+                    caps_missing.remove(cap);
+                }
+                if caps_missing.is_empty() {
                     Either::A(ok(()))
                 } else {
                     warn!("Service {} tried to use unauthorized capabilities:", name);
                     warn!("    Have capabilities {:?}", caps);
-                    warn!("    Tried to use {:?}", caps_wanted);
-                    Either::A(err(unimplemented!()))
+                    warn!("    Was missing {:?}", caps_missing);
+                    Either::A(err(AuthError::CapabilitiesRequired(caps_missing)))
                 }
             }
             ClaimsInner::User { id } => {
                 unimplemented!();
+                Either::B(ok(()))
             }
         },
         Err(e) => {
             error!("Got invalid JWT: {}", e);
             Either::A(err(if let &ErrorKind::ExpiredSignature = e.kind() {
-                unimplemented!()
+                AuthError::Expired
             } else {
-                unimplemented!()
+                AuthError::Invalid
             }))
         }
-    }
+    };
+    fut.map_err(Coproduct::inject)
 }
 
 #[derive(Debug, Deserialize, Serialize)]

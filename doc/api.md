@@ -26,6 +26,28 @@ If capabilities are specified to be required, an authentication token must be pr
 Authentication
 --------------
 
+### POST `/api/auth/issue`
+
+**TODO DISCUSS**
+
+**UNIMPLEMENTED**
+
+Issues a service token.
+
+#### Required Capabilities
+
+-	`auth.issue`
+
+#### Request Body
+
+-	`name`: A name as a string.
+-	`capabilities`: An array of the required capabilities as strings.
+
+#### Response
+
+-	If all is successful, responds with status 200 and a body containing the service token as a JSON string.
+-	If the user's capabilities are not a strict superset of the requested capabilities, responds with status 403 and a body containing an object with the string `"capabilities_required"` in the `type` property and an array of the required capabilities as strings in the `capabilities` property.
+
 ### POST `/api/auth/login`
 
 **UNIMPLEMENTED**
