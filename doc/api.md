@@ -70,8 +70,6 @@ Authorization
 
 ### POST `/api/auth/check`
 
-**UNIMPLEMENTED**
-
 Checks an authentication token for capabilities.
 
 #### Required Capabilities
@@ -90,14 +88,6 @@ Checks an authentication token for capabilities.
 
 Mail
 ----
-
-### POST `/api/mail/lists/:id/unsubscribe`
-
-**TODO REVIEW AND FORMAT THIS**
-
-**UNIMPLEMENTED**
-
-Adds a row to the `mail_unsubscribes` table, preventing email form being sent to that address from the given mailing list. A request `Content-Type` of `application/x-www-form-urlencoded` is required. The body should contain the same `email` parameter as above.
 
 ### POST `/api/mail/enqueue`
 
@@ -119,6 +109,14 @@ Adds a row to the `mail_unsubscribes` table, preventing email form being sent to
 
 -	If all is successful, responds with status 202 and an empty body.
 -	**TODO**: Document other errors.
+
+### POST `/api/mail/lists/:id/unsubscribe`
+
+**TODO REVIEW AND FORMAT THIS**
+
+**UNIMPLEMENTED**
+
+Adds a row to the `mail_unsubscribes` table, preventing email form being sent to that address from the given mailing list. A request `Content-Type` of `application/x-www-form-urlencoded` is required. The body should contain the same `email` parameter as above.
 
 ### POST `/api/mail/templates/:id/render`
 
