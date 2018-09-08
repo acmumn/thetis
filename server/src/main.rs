@@ -52,6 +52,7 @@ fn run(options: Options) -> Result<(), Error> {
     let handler_context = HandlerContext {
         base_url: Arc::new(options.base_url),
         db: DB::connect(&options.database_url)?,
+        jwt_secret: Arc::from(options.jwt_secret),
     };
     let server = serve_on(serve_addr, handler_context.clone());
     let thread_pool = ThreadPool::new();

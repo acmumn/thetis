@@ -10,9 +10,8 @@ use warp::{
     Filter, Rejection,
 };
 
-use api::auth_check;
 use web::Resp;
-use HandlerContext;
+use {auth_check, HandlerContext};
 
 /// A filter that parses a JSON or form body.
 pub fn body<T: DeserializeOwned + Send>() -> impl Filter<Extract = (T,), Error = Rejection> + Copy {
@@ -33,14 +32,15 @@ pub fn capabilities<C, I>(
     caps: I,
 ) -> impl Filter<Extract = ((),), Error = Rejection> + Clone
 where
-    C: AsRef<str> + Send + Sync,
+    C: AsRef<str> + Clone + Send + Sync,
     I: IntoIterator<Item = C>,
 {
-    let caps = Arc::from(caps.into_iter().collect::<Vec<C>>());
+    let caps = caps.into_iter().collect::<Vec<C>>();
     let ctx = ctx.clone();
 
     warp::cookie("auth").and_then(move |auth: String| {
-        auth_check(&ctx, &auth, &*caps).map_err(|e| -> Rejection { unimplemented!("{:?}", e) })
+        auth_check(&ctx, &auth, caps.clone())
+            .map_err(|e| -> Rejection { unimplemented!("{:?}", e) })
     })
 }
 

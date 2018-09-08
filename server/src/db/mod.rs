@@ -32,8 +32,8 @@ impl DB {
     /// NOTE(remexre): In theory, this is now the bottleneck for most operations -- as I understand
     /// it, we can only have as many concurrent database operations as threads in the tokio thread
     /// pool, and it's not very hard for to exhaust the threadpool. If latency problems are noted,
-    /// create the thread pool using `tokio_threadpool::Builder` to have `max_blocking <
-    /// pool_size`.
+    /// create the thread pool using `tokio_threadpool::Builder` to have
+    /// `max_blocking < pool_size`.
     fn async_query<E, F, T>(&self, func: F) -> impl Future<Item = T, Error = E>
     where
         E: From<PoolError>,

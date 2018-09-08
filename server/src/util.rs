@@ -1,6 +1,16 @@
 //! Miscellaneous utilities.
 
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 use failure;
+
+/// Generates a new number.
+pub fn gensym() -> usize {
+    lazy_static! {
+        static ref N: AtomicUsize = AtomicUsize::new(0);
+    }
+    N.fetch_add(1, Ordering::SeqCst)
+}
 
 /// Logs an error, including its causes and backtrace (if possible).
 pub fn log_err(err: failure::Error) {

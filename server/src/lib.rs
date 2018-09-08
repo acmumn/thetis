@@ -5,6 +5,11 @@ extern crate diesel;
 #[macro_use]
 extern crate failure;
 extern crate futures;
+#[macro_use]
+extern crate frunk;
+extern crate jsonwebtoken;
+#[macro_use]
+extern crate lazy_static;
 extern crate lettre;
 extern crate lettre_email;
 #[macro_use]
@@ -29,23 +34,12 @@ pub extern crate thetis_common as types;
 mod macros;
 
 pub mod api;
-mod capabilities;
+mod auth;
 mod db;
+mod handler_context;
 pub mod util;
 pub mod web;
 
-use std::sync::Arc;
-
-use url::Url;
-
+pub use auth::auth_check;
 pub use db::DB;
-
-/// The values shared by request handlers. Cheaply clonable.
-#[derive(Clone)]
-pub struct HandlerContext {
-    /// The base URL of the site.
-    pub base_url: Arc<Url>,
-
-    /// A pool of connections to the database.
-    pub db: DB,
-}
+pub use handler_context::HandlerContext;
