@@ -27,7 +27,7 @@ pub fn post_auth_check(ctx: HandlerContext) -> Resp {
         .and(warp::cookie::optional("auth"))
         .and(middleware::body())
         .and_then(move |auth, req: AuthCheckRequest| {
-            middleware::capabilities(&ctx, auth, caps!["capabilities.check"])
+            middleware::capabilities(&ctx, auth, caps!["auth.check"])
                 .and_then(|()| {
                     auth_check(&ctx, &req.token, req.capabilities).then(|r| {
                         let body = match r {

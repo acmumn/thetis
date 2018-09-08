@@ -10,7 +10,7 @@ All POST routes accept a body with a `Content-Type` of `application/json` and co
 
 All routes return a body whose `Content-Type` is `application/json`.
 
-All routes may respond with status 400 if the request body or query string are malformed or invalid. In this case, the response body will be an object describing the error, with a string in the `type` property.
+All routes may respond with status 400 if the request body or query string are malformed or invalid. In this case, the response body will be an object describing the error, with a string in the `type` property, or empty.
 
 All routes may respond with status 403 if an authentication token is:
 

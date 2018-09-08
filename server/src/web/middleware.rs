@@ -50,7 +50,7 @@ pub fn capabilities<C: AsRef<str>, I: IntoIterator<Item = String>>(
         Either::B(err(AuthError::AuthTokenRequired))
     };
 
-    fut.map_err(|err| simple_response(StatusCode::UNAUTHORIZED, err).unwrap())
+    fut.map_err(|err| simple_response(StatusCode::FORBIDDEN, err).unwrap())
 }
 
 /// A helper for passing to `.map_err` that prints the error and rejects with a server error.
