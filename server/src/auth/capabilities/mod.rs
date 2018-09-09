@@ -77,7 +77,7 @@ pub fn check<C: AsRef<str>>(
 fn ext_resolver(
     ctx: &Context,
     lit: &Lit,
-) -> Box<dyn Stream<Item = Subst, Error = Coprod!(CapsEvalError, DatabaseError)> + Send> {
+) -> Box<Stream<Item = Subst, Error = Coprod!(CapsEvalError, DatabaseError)> + Send> {
     // TODO: This could use some macro magic to make it much more readable...
     match lit.functor_b() {
         ("notBanned", 1) => match *lit.1[0] {

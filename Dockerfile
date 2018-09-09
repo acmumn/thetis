@@ -1,9 +1,15 @@
-FROM clux/muslrust:stable
-RUN apt-get update && apt-get install -y \
-  libmysqlclient-dev \
-  --no-install-recommends && \
-  rm -rf /var/lib/apt/lists/*
-ADD . /volume
+# FROM clux/muslrust:stable
+# RUN apt-get update && apt-get install -y \
+  # libmysqlclient-dev \
+  # --no-install-recommends && \
+  # rm -rf /var/lib/apt/lists/*
+# ADD . /volume
+# RUN cargo build --release
+
+FROM alpine:latest
+RUN apk add --no-cache cargo rust mariadb-static openssl-dev
+WORKDIR /src
+ADD . .
 RUN cargo build --release
 
 FROM alpine:latest

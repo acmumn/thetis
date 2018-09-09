@@ -43,7 +43,7 @@ where
         for rule in &rules.0 {
             internal
                 .entry(rule.0.functor())
-                .or_default()
+                .or_insert_with(Vec::new)
                 .push(rule.clone());
         }
 
