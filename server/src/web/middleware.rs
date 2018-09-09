@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::fmt::Display;
 
+use frunk::Coproduct;
 use futures::{
     future::{err, Either},
     prelude::*,
@@ -14,8 +15,8 @@ use warp::{
     Filter, Rejection,
 };
 
+use errors::{DatabaseError, WebError};
 use types::AuthError;
-use web::Resp;
 use {auth_check, Context};
 
 /// A filter that parses a JSON or form body.
@@ -36,21 +37,13 @@ pub fn capabilities<C: AsRef<str>, I: IntoIterator<Item = String>>(
     ctx: &Context,
     auth_cookie: Option<C>,
     caps: I,
-) -> impl Future<Item = (), Error = Response<String>> {
-    let fut = if let Some(auth_cookie) = auth_cookie {
+) -> impl Future<Item = (), Error = impl WebError> + Send {
+    if let Some(auth_cookie) = auth_cookie {
         let caps = caps.into_iter().collect::<HashSet<_>>();
-        Either::A(
-            auth_check(ctx, auth_cookie.as_ref(), caps.clone()).map_err(|e| {
-                match_coproduct!(e, {
-                    err : AuthError => { err }
-                })
-            }),
-        )
+        Either::A(auth_check(ctx, auth_cookie.as_ref(), caps.clone()))
     } else {
-        Either::B(err(AuthError::AuthTokenRequired))
-    };
-
-    fut.map_err(|err| simple_response(StatusCode::FORBIDDEN, err).unwrap())
+        Either::B(err(Coproduct::inject(AuthError::AuthTokenRequired)))
+    }
 }
 
 /// A helper for passing to `.map_err` that prints the error and rejects with a server error.

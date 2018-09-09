@@ -3,14 +3,23 @@ mod schema;
 use std::sync::Arc;
 
 use diesel::{
+    dsl::{exists, select},
+    prelude::*,
     r2d2::{ConnectionManager, Pool, PoolError},
-    MysqlConnection,
 };
 use futures::{
     future::{err, poll_fn, Either},
     prelude::*,
 };
 use tokio_threadpool::blocking;
+
+use db::schema::{
+    jwt_escrow, mail_member_subscriptions, mail_other_subscriptions, mail_send_queue,
+    mail_unsubscribes, mailing_list_templates, mailing_lists, member_bans, member_payments,
+    members, members_tag_join, tags,
+};
+use errors::DatabaseError;
+use types::{MemberID, Tag};
 
 /// A pool of connections to the database.
 #[derive(Clone)]
@@ -23,6 +32,54 @@ impl DB {
     pub fn connect(database_url: &str) -> Result<DB, PoolError> {
         let pool = Arc::new(Pool::new(ConnectionManager::new(database_url))?);
         Ok(DB { pool })
+    }
+
+    /// Gets the tags associated with a member.
+    pub fn get_tags(
+        &self,
+        member: MemberID,
+    ) -> impl Future<Item = Vec<Tag>, Error = DatabaseError> {
+        self.async_query(move |conn| {
+            members_tag_join::table
+                .inner_join(tags::table)
+                .filter(members_tag_join::member_id.eq(member))
+                .select(tags::name)
+                .load(conn)
+                .map_err(|e| e.into())
+        }).map(|tags: Vec<String>| {
+            unimplemented!();
+        })
+    }
+
+    /// Checks if a member has a given tag.
+    pub fn has_tag(
+        &self,
+        member: MemberID,
+        tag: Tag,
+    ) -> impl Future<Item = bool, Error = DatabaseError> {
+        self.async_query(move |conn| {
+            select(exists(
+                members_tag_join::table
+                    .inner_join(tags::table)
+                    .filter(members_tag_join::member_id.eq(member))
+                    .filter(tags::name.eq(tag.clone())),
+            )).get_result(conn)
+                .map_err(|e| e.into())
+        })
+    }
+
+    /// Returns whether the member is banned.
+    pub fn is_banned(&self, member: MemberID) -> impl Future<Item = bool, Error = DatabaseError> {
+        self.async_query(move |conn| {
+            unimplemented!();
+        })
+    }
+
+    /// Returns whether the member is paid.
+    pub fn is_paid(&self, member: MemberID) -> impl Future<Item = bool, Error = DatabaseError> {
+        self.async_query(move |conn| {
+            unimplemented!();
+        })
     }
 
     /// Performs a query "asynchronously" (but not really). Diesel currently does not support

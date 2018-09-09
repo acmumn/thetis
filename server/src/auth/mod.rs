@@ -9,6 +9,7 @@ use futures::{
 };
 use jsonwebtoken::{self, errors::ErrorKind, Algorithm, Validation};
 
+use errors::{CapsEvalError, DatabaseError};
 use types::{AuthError, MemberID};
 use Context;
 
@@ -17,13 +18,13 @@ pub fn auth_check<I: IntoIterator<Item = String>>(
     ctx: &Context,
     token: &str,
     caps: I,
-) -> impl Future<Item = (), Error = Coprod!(AuthError)> {
+) -> impl Future<Item = (), Error = Coprod!(AuthError, CapsEvalError, DatabaseError)> {
     lazy_static! {
         static ref VALIDATION: Validation = Validation::new(Algorithm::HS512);
     }
 
     let caps_wanted = caps.into_iter().collect::<HashSet<_>>();
-    let fut = match jsonwebtoken::decode::<Claims>(token, ctx.jwt_secret.as_bytes(), &VALIDATION) {
+    match jsonwebtoken::decode::<Claims>(token, ctx.jwt_secret.as_bytes(), &VALIDATION) {
         Ok(tok) => match tok.claims.inner {
             ClaimsInner::Service { name, caps } => {
                 let mut caps_missing = caps_wanted;
@@ -36,24 +37,35 @@ pub fn auth_check<I: IntoIterator<Item = String>>(
                     warn!("Service {} tried to use unauthorized capabilities:", name);
                     warn!("    Have capabilities {:?}", caps);
                     warn!("    Was missing {:?}", caps_missing);
-                    Either::A(err(AuthError::CapabilitiesRequired(caps_missing)))
+                    Either::A(err(Coproduct::inject(AuthError::CapabilitiesRequired(
+                        caps_missing,
+                    ))))
                 }
             }
             ClaimsInner::User { id } => {
-                unimplemented!();
-                Either::B(ok(()))
+                let caps = caps_wanted.iter().cloned().collect();
+                Either::B(
+                    capabilities::check(ctx.clone(), id, caps).then(|r| match r {
+                        Ok(true) => Ok(()),
+                        Ok(false) => Err(Coproduct::inject(AuthError::CapabilitiesRequired(
+                            caps_wanted,
+                        ))),
+                        Err(e) => Err(Coproduct::embed(e)),
+                    }),
+                )
             }
         },
         Err(e) => {
             error!("Got invalid JWT: {}", e);
-            Either::A(err(if let &ErrorKind::ExpiredSignature = e.kind() {
-                AuthError::Expired
-            } else {
-                AuthError::Invalid
-            }))
+            Either::A(err(Coproduct::inject(
+                if let &ErrorKind::ExpiredSignature = e.kind() {
+                    AuthError::Expired
+                } else {
+                    AuthError::Invalid
+                },
+            )))
         }
-    };
-    fut.map_err(Coproduct::inject)
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]

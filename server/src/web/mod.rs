@@ -12,7 +12,7 @@ use futures::{
 use warp::{self, filters::BoxedFilter, http::Response};
 
 pub use web::routes::routes;
-use {Context, DB};
+use Context;
 
 /// A convenient alias.
 type Resp = BoxedFilter<(Response<String>,)>;

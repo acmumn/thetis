@@ -3,6 +3,17 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use failure;
+use futures::Stream;
+
+/// Boxes a stream, since `.boxed()` is apparently deprecated. (It makes sense to deprecate the
+/// futures version, since `Either` exists, but since there's no Stream `Either`...) This is mainly
+/// a way to give a hint to type inference that we want a trait object.
+pub fn box_stream<E, S, T>(stream: S) -> Box<dyn Stream<Item = T, Error = E> + Send>
+where
+    S: 'static + Stream<Item = T, Error = E> + Send,
+{
+    Box::new(stream)
+}
 
 /// Generates a new number.
 pub fn gensym() -> usize {

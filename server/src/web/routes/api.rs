@@ -1,14 +1,15 @@
 //! API routes, which get mounted at `/api`.
 
-use futures::{future::ok, prelude::*};
+use futures::prelude::*;
 use serde_json;
 use warp::{
     self,
     http::{Response, StatusCode},
-    Filter, Rejection,
+    Filter,
 };
 
-use types::{AuthCheckRequest, AuthError, MailEnqueueRequest};
+use errors::{DatabaseError, WebError};
+use types::{AuthCheckRequest, MailEnqueueRequest};
 use web::{middleware, Resp};
 use {auth_check, Context};
 
@@ -35,19 +36,22 @@ pub fn post_auth_check(ctx: Context) -> Resp {
         .and_then(move |auth, req: AuthCheckRequest| {
             middleware::capabilities(&ctx, auth, caps!["auth.check"])
                 .and_then(|()| {
-                    auth_check(&ctx, &req.token, req.capabilities).then(|r| {
-                        let body = match r {
-                            Ok(()) => json!({ "type": "ok" }),
-                            Err(e) => match_coproduct!(e, {
-                                err : AuthError => { serde_json::to_value(err).unwrap() }
-                            }),
-                        };
-                        Ok((StatusCode::OK, body))
+                    auth_check(&ctx, &req.token, req.capabilities).then(|r| match r {
+                        Ok(()) => Ok((StatusCode::OK, json!({ "type": "ok" }))),
+                        Err(e) => {
+                            let (status, body) = e.to_status_body();
+                            let status = if status == StatusCode::FORBIDDEN {
+                                StatusCode::OK
+                            } else {
+                                status
+                            };
+                            Ok((status, body))
+                        }
                     })
                 })
                 .then(|r| match r {
                     Ok((status, body)) => middleware::simple_response(status, body),
-                    Err(e) => Ok(e),
+                    Err(e) => Ok(e.to_response()),
                 })
         })
         .boxed()
@@ -75,7 +79,7 @@ pub fn post_mail_enqueue(ctx: Context) -> Resp {
                 })
                 .then(|r: Result<(_, ()), _>| match r {
                     Ok((status, body)) => middleware::simple_response(status, body),
-                    Err(e) => Ok(e),
+                    Err(e) => Ok(e.to_response()),
                 })
         })
         .boxed()

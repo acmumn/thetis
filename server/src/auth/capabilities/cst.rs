@@ -42,7 +42,7 @@ impl Clause {
 pub enum Term {
     Any,
     Lit(Lit),
-    Num(isize),
+    Num(u32),
     Var(String),
 }
 

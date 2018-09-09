@@ -1,11 +1,11 @@
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 
 use failure::{Error, SyncFailure};
 use tera::Tera;
 use url::Url;
 
-use auth::capabilities::{load_capabilities_from, Rules};
+use auth::capabilities::Rules;
 use DB;
 
 /// The "globalish" values used by the server. Cheaply clonable.
@@ -15,7 +15,7 @@ pub struct Context {
     pub(crate) base_url: Arc<Url>,
 
     /// The currently loaded rules.
-    pub(crate) capabilities: Arc<Mutex<Rules>>,
+    pub(crate) capabilities: Arc<RwLock<Rules>>,
 
     /// The file that contains rules.
     capabilities_file: Arc<Path>,
@@ -27,7 +27,7 @@ pub struct Context {
     pub(crate) jwt_secret: Arc<str>,
 
     /// The web templates.
-    pub templates: Arc<Mutex<Tera>>,
+    pub templates: Arc<RwLock<Tera>>,
 }
 
 impl Context {
@@ -43,12 +43,12 @@ impl Context {
         let capabilities_file = Arc::from(capabilities_file);
         let jwt_secret = Arc::from(jwt_secret);
 
-        let capabilities = load_capabilities_from(&capabilities_file)?;
-        let capabilities = Arc::new(Mutex::new(capabilities));
+        let capabilities = Rules::load_from(&capabilities_file)?;
+        let capabilities = Arc::new(RwLock::new(capabilities));
 
         template_dir.push_str("/**/*");
         let templates = Tera::new(&template_dir).map_err(SyncFailure::new)?;
-        let templates = Arc::new(Mutex::new(templates));
+        let templates = Arc::new(RwLock::new(templates));
 
         let db = DB::connect(database_url)?;
 
