@@ -18,6 +18,8 @@ extern crate lettre_email;
 extern crate log;
 extern crate mime;
 extern crate pulldown_cmark;
+#[macro_use]
+extern crate regex;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;

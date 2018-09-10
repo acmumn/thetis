@@ -36,7 +36,7 @@ impl WebError for CapsEvalError {
 
 define_error!(CapabilitiesLoadError {
     Io(IoError, err => err),
-    Parse(ParseError, err => err.clone().map_token(|(n, t)| t)),
+    Parse(ParseError, err => err.clone().map_token(|(_n, t)| t)),
 });
 
 define_error!(DatabaseError {

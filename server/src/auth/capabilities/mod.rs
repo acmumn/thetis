@@ -31,7 +31,7 @@ use std::sync::Arc;
 use frunk::Coproduct;
 use futures::{
     prelude::*,
-    stream::{once, poll_fn},
+    stream::{iter_ok, once, poll_fn},
 };
 
 pub use auth::capabilities::{ast::*, eval::Env, unify::Subst};
@@ -67,7 +67,7 @@ pub fn check<C: AsRef<str>>(
             Lit(CAP.clone(), args)
         })
         .collect();
-    env.solve_all(lits).into_future().then(|r| match r {
+    env.solve_all(lits, 10).into_future().then(|r| match r {
         Ok((o, _)) => Ok(o.is_some()),
         Err((e, _)) => Err(e),
     })
@@ -80,6 +80,10 @@ fn ext_resolver(
 ) -> Box<Stream<Item = Subst, Error = Coprod!(CapsEvalError, DatabaseError)> + Send> {
     // TODO: This could use some macro magic to make it much more readable...
     match lit.functor_b() {
+        ("debug", _) => {
+            debug!("{}", lit);
+            box_stream(once(Ok(Subst::new())))
+        }
         ("notBanned", 1) => match *lit.1[0] {
             Term::Num(n) => box_stream(
                 success_adaptor(ctx.db.is_banned(MemberID(n))).map_err(Coproduct::inject),
@@ -109,9 +113,22 @@ fn ext_resolver(
                 success_adaptor(ctx.db.has_tag(MemberID(n), Tag(t.to_string())))
                     .map_err(Coproduct::inject),
             ),
-            (&Term::Num(n), &Term::Var(v)) => {
-                box_stream(/* TODO */ ::futures::stream::empty())
-            }
+            (&Term::Num(n), &Term::Var(v)) => box_stream(
+                ctx.db
+                    .get_tags(MemberID(n))
+                    .map(move |tags| {
+                        iter_ok(tags).map(move |tag| {
+                            let tag = Lit(tag.0.into(), vec![]);
+                            let tag = Arc::new(Term::Lit(tag));
+
+                            let mut s = Subst::new();
+                            s.push(v, tag);
+                            s
+                        })
+                    })
+                    .flatten_stream()
+                    .map_err(Coproduct::inject),
+            ),
             (term, _) => {
                 let kind = match term {
                     &Term::Var(_) => CapsEvalError::InsufficientlyInstantiatedArgs,

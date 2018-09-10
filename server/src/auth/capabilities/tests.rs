@@ -8,6 +8,7 @@ fn execution() {
     let rules = r#"
         taught(socrates, plato).
         taught(plato, aristotle).
+        taught(aristotle, alexander).
 
         path(X, X).
         path(X, Z) :- taught(X, Y), path(Y, Z).
@@ -22,17 +23,19 @@ fn execution() {
         .to_ast(&mut HashSet::new(), &mut scope);
 
     let env = Env::new_self_contained::<()>(&rules);
-    let results = env
-        .solve(query)
-        .map(|s| {
-            s.into_iter()
-                .find(|&(k, _)| k == ans_var)
-                .map(|(_, v)| v)
-                .unwrap()
-        })
+    let mut results = env
+        .solve(query, 10)
+        .map(|s| s.get(ans_var).cloned().unwrap())
         .collect()
-        .wait();
-    unimplemented!("{:?}", results)
+        .wait()
+        .unwrap();
+    results.sort();
+
+    let expected = vec!["alexander", "aristotle", "plato"]
+        .into_iter()
+        .map(|s| Arc::new(Term::Lit(Lit(s.into(), vec![]))))
+        .collect::<Vec<_>>();
+    assert_eq!(results, expected);
 }
 
 #[test]

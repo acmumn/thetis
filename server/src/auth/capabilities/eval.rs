@@ -7,7 +7,7 @@ use futures::{
 };
 
 use auth::capabilities::{
-    unify::{apply_subst_to_lit, unify, Subst},
+    unify::{unify, Subst},
     Clause, Lit, Rules, Term,
 };
 use util::box_stream;
@@ -24,6 +24,7 @@ pub struct Env<F> {
 // The unit type argument is just a placeholder.
 impl Env<()> {
     /// Creates an env without an external resolver.
+    #[allow(dead_code)]
     pub fn new_self_contained<E: 'static + Send>(
         rules: &Rules,
     ) -> Env<for<'a> fn(&'a Lit) -> Empty<Subst, E>> {
@@ -54,53 +55,76 @@ where
     }
 
     /// Tries to solve for the given literal.
-    pub fn solve(&self, lit: Lit) -> impl Stream<Item = Subst, Error = E> + Send {
-        eprintln!("solve {:?}", lit);
-        (self.external)(&lit).chain(self.solve_internal(lit))
+    pub fn solve(&self, lit: Lit, depth: usize) -> impl Stream<Item = Subst, Error = E> + Send {
+        if depth == 0 {
+            box_stream(empty())
+        } else {
+            box_stream((self.external)(&lit).chain(self.solve_internal(lit, depth)))
+        }
     }
 
     /// Tries to solve for multiple literals.
-    pub fn solve_all(&self, mut lits: Vec<Lit>) -> impl Stream<Item = Subst, Error = E> + Send {
-        if lits.is_empty() {
+    pub fn solve_all(
+        &self,
+        mut goals: Vec<Lit>,
+        depth: usize,
+    ) -> Box<Stream<Item = Subst, Error = E> + Send> {
+        if goals.is_empty() {
             box_stream(once(Ok(Subst::new())))
         } else {
-            let hd = lits.remove(0);
-            let env = self.clone(); // TODO: There's gotta be a more elegant approach...
+            let head = goals.remove(0);
+            let env = self.clone();
             box_stream(
-                self.solve(hd)
+                self.solve(head, depth)
                     .map(move |s| {
-                        let tl = lits.iter().map(|c| apply_subst_to_lit(c, &s)).collect();
-                        env.solve_all(tl).map(move |s2| {
-                            let mut s = s.clone();
-                            s.extend(s2);
-                            s
-                        })
+                        let tail = goals.iter().map(|l| s.apply_to_lit(l)).collect::<Vec<_>>();
+                        env.solve_all(tail, depth).map(move |s2| s.merge(s2))
                     })
                     .flatten(),
             )
         }
     }
 
-    fn solve_internal(&self, lit: Lit) -> impl Stream<Item = Subst, Error = E> + Send {
-        let rules = self.rules.get(&lit.functor()).cloned().unwrap_or_default();
-        let term = Arc::new(Term::Lit(lit));
-        let env = self.clone(); // TODO: There's gotta be a more elegant approach...
-        iter_ok(rules)
-            .filter_map(move |Clause(h, b)| {
-                let h = Arc::new(Term::Lit(h.clone()));
-                unify(term.clone(), h).map(|s| {
-                    let b = b.iter().map(|c| apply_subst_to_lit(c, &s)).collect();
-                    (s, b)
+    fn solve_internal(
+        &self,
+        goal: Lit,
+        depth: usize,
+    ) -> Box<Stream<Item = Subst, Error = E> + Send> {
+        lazy_static! {
+            static ref TRUE: Lit = Lit("true".into(), vec![]);
+        }
+
+        if goal == *TRUE {
+            box_stream(once(Ok(Subst::new())))
+        } else {
+            let rules = self
+                .rules
+                .get(&goal.functor())
+                .map(|v| v as &[Clause])
+                .unwrap_or_default();
+            let goal = Arc::new(Term::Lit(goal));
+            let rules = rules
+                .iter()
+                .map(|c| c.freshen())
+                .filter_map(|Clause(h, body)| {
+                    let head = Arc::new(Term::Lit(h));
+                    let subst = unify(head, goal.clone())?;
+                    let body = body
+                        .iter()
+                        .map(|l| subst.apply_to_lit(l))
+                        .collect::<Vec<_>>();
+                    Some((subst, body))
                 })
-            })
-            .map(move |(s, b)| {
-                env.solve_all(b).map(move |s2| {
-                    let mut s = s.clone();
-                    s.extend(s2);
-                    s
-                })
-            })
-            .flatten()
+                .collect::<Vec<_>>();
+            let env = self.clone();
+            box_stream(
+                iter_ok(rules)
+                    .map(move |(subst, body)| {
+                        env.solve_all(body, depth).map(move |s| subst.merge(s))
+                    })
+                    .flatten(),
+            )
+        }
     }
 }
 

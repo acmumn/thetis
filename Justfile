@@ -18,7 +18,7 @@ clippy:
 doc:
 	cargo doc --all
 test:
-	cargo test --all
+	RUST_BACKTRACE=full cargo test --all -- --nocapture
 
 build-docker:
 	docker build -t acmumn/thetis .

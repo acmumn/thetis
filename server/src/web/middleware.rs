@@ -15,7 +15,7 @@ use warp::{
     Filter, Rejection,
 };
 
-use errors::{DatabaseError, WebError};
+use errors::WebError;
 use types::AuthError;
 use {auth_check, Context};
 
