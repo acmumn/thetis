@@ -81,12 +81,13 @@ fn ext_resolver(
     // TODO: This could use some macro magic to make it much more readable...
     match lit.functor_b() {
         ("debug", _) => {
-            debug!("{}", lit);
+            info!("{}", lit);
             box_stream(once(Ok(Subst::new())))
         }
         ("notBanned", 1) => match *lit.1[0] {
             Term::Num(n) => box_stream(
-                success_adaptor(ctx.db.is_banned(MemberID(n))).map_err(Coproduct::inject),
+                success_adaptor(ctx.db.is_banned(MemberID(n)).map(|b| !b))
+                    .map_err(Coproduct::inject),
             ),
             ref term => {
                 let kind = match term {

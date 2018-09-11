@@ -44,10 +44,8 @@ impl DB {
                 .inner_join(tags::table)
                 .filter(members_tag_join::member_id.eq(member))
                 .select(tags::name)
-                .load(conn)
+                .get_results(conn)
                 .map_err(|e| e.into())
-        }).map(|tags: Vec<String>| {
-            unimplemented!();
         })
     }
 

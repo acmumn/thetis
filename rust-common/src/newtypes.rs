@@ -9,6 +9,7 @@ pub struct MemberID(pub u32);
 
 /// A tag applied to a member.
 #[derive(Clone, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+#[cfg_attr(feature = "diesel", derive(FromSqlRow))]
 pub struct Tag(pub String);
 
 /// The database ID of mail template.
