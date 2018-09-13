@@ -1,43 +1,25 @@
 //! Error types.
 
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::io::Error as IoError;
 
 use diesel::{r2d2::PoolError, result::Error as DieselError};
+use fall::ResolutionError;
 use frunk::coproduct::{CNil, Coproduct};
 use serde_json::{self, Value};
 use warp::http::{Response, StatusCode};
 
-pub use auth::capabilities::cst::ParseError;
 use types::AuthError;
 
 impl_WebError_for_Serialize!(AuthError, StatusCode::FORBIDDEN);
 
-/// An error evaluating capabilities.
-#[derive(Debug, Fail)]
-pub enum CapsEvalError {
-    /// A variable was passed where a literal was required. Reordering goals may fix this.
-    #[fail(display = "Insufficiently instantiated arguments to {}/{}", _0, _1)]
-    InsufficientlyInstantiatedArgs(&'static str, usize),
-
-    /// A value of the wrong type was passed.
-    #[fail(display = "Type error in arguments to {}/{}", _0, _1)]
-    TypeError(&'static str, usize),
-}
-
-impl WebError for CapsEvalError {
+impl WebError for ResolutionError {
     fn to_status_body(self) -> (StatusCode, Value) {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            json!({ "type": "capabilities", "msg": self.to_string() }),
+            json!({ "type": "resolution", "msg": self.to_string() }),
         )
     }
 }
-
-define_error!(CapabilitiesLoadError {
-    Io(IoError, err => err),
-    Parse(ParseError, err => err.clone().map_token(|(_n, t)| t)),
-});
 
 define_error!(DatabaseError {
     Diesel(DieselError, err => err),

@@ -2,6 +2,7 @@ pub mod capabilities;
 
 use std::collections::HashSet;
 
+use fall::ResolutionError;
 use frunk::Coproduct;
 use futures::{
     future::{err, ok, Either},
@@ -9,7 +10,7 @@ use futures::{
 };
 use jsonwebtoken::{self, errors::ErrorKind, Algorithm, Validation};
 
-use errors::{CapsEvalError, DatabaseError};
+use errors::DatabaseError;
 use types::{AuthError, MemberID};
 use Context;
 
@@ -18,7 +19,7 @@ pub fn auth_check<I: IntoIterator<Item = String>>(
     ctx: &Context,
     token: &str,
     caps: I,
-) -> impl Future<Item = (), Error = Coprod!(AuthError, CapsEvalError, DatabaseError)> {
+) -> impl Future<Item = (), Error = Coprod!(AuthError, DatabaseError, ResolutionError)> {
     lazy_static! {
         static ref VALIDATION: Validation = Validation::new(Algorithm::HS512);
     }

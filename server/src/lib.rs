@@ -4,12 +4,11 @@
 extern crate diesel;
 #[macro_use]
 extern crate failure;
+extern crate fall;
 extern crate futures;
 #[macro_use]
 extern crate frunk;
 extern crate jsonwebtoken;
-#[macro_use]
-extern crate lalrpop_util;
 #[macro_use]
 extern crate lazy_static;
 extern crate lettre;
@@ -18,8 +17,6 @@ extern crate lettre_email;
 extern crate log;
 extern crate mime;
 extern crate pulldown_cmark;
-#[macro_use]
-extern crate regex;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;

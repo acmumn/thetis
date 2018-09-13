@@ -1,30 +1,7 @@
-//! The capabilities system. This is an interpreter for a small subset of Prolog; if you find
-//! yourself confused as to why this is the case (and possibly feel the urge to rewrite it), ask
-//! Prof. Gini or Prof. Nadathur for Prolog/logic programming resources and convince yourself that
-//! this approach makes sense.
-//!
-//! If you want to understand more about this implementation, see
-//! [How to replace failure by a list of successes](http://dl.acm.org/citation.cfm?id=5280.5288)
-//! by Philip Wadler. This code does not follow that paper exactly (since we can encounter database
-//! errors during resolution), but the general approach is the same.
-//!
-//! NOTE(remexre): I'm unconvinced that this implementation won't have stack overflows with
-//! sufficiently poorly written rules; the [stacker](https://crates.io/crates/stacker/) crate may
-//! help with this, though exactly how is nontrivial. (Create a custom stream adaptor?) More
-//! importantly, don't write crappy rules.
-
-mod ast;
-pub(crate) mod cst;
-mod eval;
-mod unify;
-
-#[cfg(test)]
-mod tests;
-
-pub(crate) mod grammar {
-    lalrpop_mod!(grammar);
-    pub use self::grammar::*;
-}
+//! The capabilities system. This uses [fall](https://crates.io/crates/fall), an interpreter for a
+//! small subset of Prolog. If you find yourself confused as to why this is the case (and possibly
+//! feel the urge to rewrite it), ask Prof. Gini or Prof. Nadathur for Prolog/logic programming
+//! resources and convince yourself that this approach makes sense.
 
 use std::sync::Arc;
 
@@ -34,8 +11,8 @@ use futures::{
     stream::{iter_ok, once, poll_fn},
 };
 
-pub use auth::capabilities::{ast::*, eval::Env, unify::Subst};
-use errors::{CapsEvalError, DatabaseError};
+use errors::DatabaseError;
+use fall::{Env, Lit, ResolutionError, Subst, Term};
 use types::{MemberID, Tag};
 use util::box_stream;
 use Context;
@@ -45,7 +22,7 @@ pub fn check<C: AsRef<str>>(
     ctx: Context,
     member: MemberID,
     caps: Vec<C>,
-) -> impl Future<Item = bool, Error = Coprod!(CapsEvalError, DatabaseError)> + Send {
+) -> impl Future<Item = bool, Error = Coprod!(ResolutionError, DatabaseError)> + Send {
     lazy_static! {
         static ref CAP: Arc<str> = Arc::from("cap".to_string());
     }
@@ -77,7 +54,7 @@ pub fn check<C: AsRef<str>>(
 fn ext_resolver(
     ctx: &Context,
     lit: &Lit,
-) -> Box<Stream<Item = Subst, Error = Coprod!(CapsEvalError, DatabaseError)> + Send> {
+) -> Box<Stream<Item = Subst, Error = Coprod!(ResolutionError, DatabaseError)> + Send> {
     // TODO: This could use some macro magic to make it much more readable...
     match lit.functor_b() {
         ("debug", _) => {
@@ -91,8 +68,8 @@ fn ext_resolver(
             ),
             ref term => {
                 let kind = match term {
-                    Term::Var(_) => CapsEvalError::InsufficientlyInstantiatedArgs,
-                    _ => CapsEvalError::TypeError,
+                    Term::Var(_) => ResolutionError::InsufficientlyInstantiatedArgs,
+                    _ => ResolutionError::TypeError,
                 };
                 box_stream(once(Err(Coproduct::inject(kind("notBanned", 1)))))
             }
@@ -103,8 +80,8 @@ fn ext_resolver(
             }
             ref term => {
                 let kind = match term {
-                    Term::Var(_) => CapsEvalError::InsufficientlyInstantiatedArgs,
-                    _ => CapsEvalError::TypeError,
+                    Term::Var(_) => ResolutionError::InsufficientlyInstantiatedArgs,
+                    _ => ResolutionError::TypeError,
                 };
                 box_stream(once(Err(Coproduct::inject(kind("notBanned", 1)))))
             }
@@ -132,8 +109,8 @@ fn ext_resolver(
             ),
             (term, _) => {
                 let kind = match term {
-                    &Term::Var(_) => CapsEvalError::InsufficientlyInstantiatedArgs,
-                    _ => CapsEvalError::TypeError,
+                    &Term::Var(_) => ResolutionError::InsufficientlyInstantiatedArgs,
+                    _ => ResolutionError::TypeError,
                 };
                 box_stream(once(Err(Coproduct::inject(kind("notBanned", 1)))))
             }

@@ -2,10 +2,10 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
 use failure::{Error, SyncFailure};
+use fall::Rules;
 use tera::Tera;
 use url::Url;
 
-use auth::capabilities::Rules;
 use DB;
 
 /// The "globalish" values used by the server. Cheaply clonable.
