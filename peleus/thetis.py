@@ -23,6 +23,7 @@ class ThetisBackend:
 
 	def api_ping(self):
 		try:
-			return requests.get(self.api_base+"/ping").status_code == 204
+			if requests.get(self.api_base+"/ping").status_code != 204:
+				raise BackendError("Ping Failed (not 204)")
 		except RequestException as e:
-			raise BackendError("Ping Failed") from e
+			raise BackendError("Ping Failed (RequestException)") from e
