@@ -4,4 +4,4 @@ app = Flask('peleus')
 
 @app.route('/')
 def hello_world():
-    return "Hello, World!"
+    return "Goodbye, World!"
