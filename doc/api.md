@@ -26,7 +26,7 @@ If capabilities are specified to be required, an authentication token must be pr
 Authentication
 --------------
 
-### POST `/api/auth/issue`
+### POST `/api/thetis/auth/issue`
 
 **TODO DISCUSS**
 
@@ -48,16 +48,14 @@ Issues a service token.
 -	If all is successful, responds with status 200 and a body containing the service token as a JSON string.
 -	If the user's capabilities are not a strict superset of the requested capabilities, responds with status 403 and a body containing an object with the string `"capabilities_required"` in the `type` property and an array of the required capabilities as strings in the `capabilities` property.
 
-### POST `/api/auth/login`
-
-**UNIMPLEMENTED**
+### POST `/api/thetis/auth/login`
 
 Causes the user to be mailed a "magic link."
 
 #### Request Body
 
 -	`redirect`: A URL as a string. Optional, defaults to `$BASE_URL`. The URL the magic link should redirect to after the user has logged in.
--	`student_id`: A seven-character string composed solely of ASCII decimal digits. The student ID of the user to send a link to.
+-	`x500`: The user's X.500.
 
 #### Response
 
@@ -68,7 +66,7 @@ Causes the user to be mailed a "magic link."
 Authorization
 -------------
 
-### POST `/api/auth/check`
+### POST `/api/thetis/auth/check`
 
 Checks an authentication token for capabilities.
 
@@ -89,7 +87,7 @@ Checks an authentication token for capabilities.
 Mail
 ----
 
-### POST `/api/mail/enqueue`
+### POST `/api/thetis/mail/enqueue`
 
 **UNIMPLEMENTED**
 
@@ -110,7 +108,7 @@ Mail
 -	If all is successful, responds with status 202 and an empty body.
 -	**TODO**: Document other errors.
 
-### POST `/api/mail/lists/:id/unsubscribe`
+### POST `/api/thetis/mail/lists/:id/unsubscribe`
 
 **TODO REVIEW AND FORMAT THIS**
 
@@ -118,7 +116,7 @@ Mail
 
 Adds a row to the `mail_unsubscribes` table, preventing email form being sent to that address from the given mailing list. A request `Content-Type` of `application/x-www-form-urlencoded` is required. The body should contain the same `email` parameter as above.
 
-### POST `/api/mail/templates/:id/render`
+### POST `/api/thetis/mail/templates/:id/render`
 
 **TODO REVIEW AND FORMAT THIS**
 
@@ -129,7 +127,7 @@ Requires an authentication token granting admin privileges. A request `Content-T
 Other
 -----
 
-### GET `/api/ping`
+### GET `/api/thetis/ping`
 
 #### Response
 

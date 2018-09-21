@@ -27,7 +27,7 @@ pub fn routes(ctx: Context) -> Resp {
         .boxed()
 }
 
-/// The `POST /api/auth/check` route.
+/// The `POST /api/thetis/auth/check` route.
 pub fn post_auth_check(ctx: Context) -> Resp {
     warp::index()
         .and(warp::post2())
@@ -48,16 +48,14 @@ pub fn post_auth_check(ctx: Context) -> Resp {
                             Ok((status, body))
                         }
                     })
-                })
-                .then(|r| match r {
+                }).then(|r| match r {
                     Ok((status, body)) => middleware::simple_response(status, body),
                     Err(e) => Ok(e.to_response()),
                 })
-        })
-        .boxed()
+        }).boxed()
 }
 
-/// The `POST /api/mail/enqueue` route.
+/// The `POST /api/thetis/mail/enqueue` route.
 pub fn post_mail_enqueue(ctx: Context) -> Resp {
     warp::index()
         .and(warp::post2())
@@ -76,16 +74,14 @@ pub fn post_mail_enqueue(ctx: Context) -> Resp {
                     //Ok((StatusCode::OK, body))
                     //})
                     Ok(unimplemented!())
-                })
-                .then(|r: Result<(_, ()), _>| match r {
+                }).then(|r: Result<(_, ()), _>| match r {
                     Ok((status, body)) => middleware::simple_response(status, body),
                     Err(e) => Ok(e.to_response()),
                 })
-        })
-        .boxed()
+        }).boxed()
 }
 
-/// The `GET /api/ping` route.
+/// The `GET /api/thetis/ping` route.
 pub fn get_ping(_ctx: Context) -> Resp {
     warp::index()
         .and(warp::get2())
@@ -94,6 +90,5 @@ pub fn get_ping(_ctx: Context) -> Resp {
                 .status(StatusCode::NO_CONTENT)
                 .body(String::new())
                 .unwrap()
-        })
-        .boxed()
+        }).boxed()
 }
