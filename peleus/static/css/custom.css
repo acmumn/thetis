@@ -1,0 +1,15 @@
+.flashes{
+	text-align: center;
+}
+
+.flash-error{
+	background-color: red
+}
+
+.flash-message{
+	background-color: rgb(100,255,100);
+}
+
+.tooltipd{
+	text-decoration: underline dashed;
+}

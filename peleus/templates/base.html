@@ -1,0 +1,26 @@
+<html>
+	<head>
+		<title>{% block htmltitle %}{% endblock %}</title>
+		<link rel="stylesheet" type="text/css" href="/static/css/normalize.css">
+		<link rel="stylesheet" type="text/css" href="/static/css/skeleton.css">
+		<link rel="stylesheet" type="text/css" href="/static/css/custom.css">
+	</head>
+	<body>
+		<div class="container">
+			{% with messages = get_flashed_messages(with_categories=true) %}
+			  {% if messages %}
+				<div class="row">
+				  <div class="twelve columns">
+					<ul class="flashes">
+					{% for category, message in messages %}
+					  <li class="flash-{{ category }}">{{ message }}</li>
+					{% endfor %}
+					</ul>
+				  </div>
+				</div>
+			  {% endif %}
+			{% endwith %}
+			{% block content %}{% endblock %}
+		</div>
+	</body>
+</html>

@@ -1,4 +1,7 @@
-from thetis import ThetisBackend, BackendError
+from app.thetisapi import ThetisBackend, BackendError
 
-thetis = ThetisBackend("http://argo.acm.umn.edu:9999/api/", "chungus")
-thetis.api_ping()
+REMOTE = "http://nathan.members.acm.umn.edu:8080/api"
+
+thetis_noauth = ThetisBackend(REMOTE, None)
+thetis_noauth.api_ping()
+# thetis.api_issue_link('goess006')
