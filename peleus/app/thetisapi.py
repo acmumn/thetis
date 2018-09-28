@@ -68,3 +68,5 @@ class StubThetisBackend:
 
 	def api_get_user_by_x500(self, x500):
 		pass
+
+ThetisBackend = StubThetisBackend

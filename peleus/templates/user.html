@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block htmltitle %}User{% endblock %}
+{% block title %}User{% endblock %}
+
+{% block content %}
+<div style="text-align:center;margin-top:5%;"><h1 style="display:inline-block">Log In</h1>
+</div>
+<form action="" method="POST">
+	<div class="row u-full-width">
+		<div class="twelve columns u-full-width">
+			{{db_id}}
+			<span class="tooltipd" title="or your magic non-x500 ID">x500</span>: d<br/>
+			<button type="submit" class="button-primary u-full-width" id="oauth-login">Send me a Magic Login Link</button>
+		</div>
+	</div>
+</form>
+{% endblock %}

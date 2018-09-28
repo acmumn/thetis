@@ -22,4 +22,4 @@ def render_root():
 def render_bad_conf():
 	return "if you are seeing this, we mondo beefed the site.\n call me at 240 813 8477"
 
-from . import login
+from . import login, user
