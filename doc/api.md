@@ -144,7 +144,15 @@ The term "canonical user object" is used to refer to a user object with all of t
 Requires an authentication token granting `user.list`.
 Takes the parameter `query`, which is a user object. Returns an object containing the following keys:
 
- - `found`: A list of canonical user objects, whose properties match those on the `query`
+ - `found`: A list of canonical user objects, matching the `query`
+
+Matching here means that for all user objects returned, all fields set in the `query` will match the fields set in the user object. Fields that do not have a key set in the `query` are not used to search - setting null requires the field be null, not setting the key imposes no restrictions on the field's value. In psuedocode:
+
+```python
+for user in returned:
+	for key, value in query:
+		user[key] == query[key]
+```
 
 An empty `query` object will return all users.
 
