@@ -178,7 +178,7 @@ Returns the canonical user object for the user with database id `<id>`.
 **UNIMPLEMENTED**
 
 `id` is a base-10 integer corresponding to the `db_id` of the user you wish to access.
-Requires an authentication token granting the requisite `user.modify.<field>(db_id)` privileged.
+Requires an authentication token granting the requisite `user.modify.<field>(db_id)` privileges.
 Takes a parameter `update` containing a user object with one or more fields set. Updates those fields on the user with database id `<id>` and returns a canonical user object for that user.
 
 ### POST `/api/thetis/users/user/new`
