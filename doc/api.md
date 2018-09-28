@@ -141,7 +141,7 @@ The term "canonical user object" is used to refer to a user object with all of t
 
 **UNIMPLEMENTED**
 
-Requires an authentication token granting membership privileges.
+Requires an authentication token granting `user.list`.
 Takes the parameter `query`, which is a user object. Returns an object containing the following keys:
 
  - `found`: A list of canonical user objects, whose properties match those on the `query`
@@ -162,7 +162,7 @@ Returns the canonical user object for the user whose token was used to make the 
 **UNIMPLEMENTED**
 
 `id` is a base-10 integer corresponding to the `db_id` of the user you wish to access.
-Requires an authentication token granting membership privileges to access any user that is not the user whose token was used to make the request.
+Requires an authentication token granting view permissions for the user.
 Returns the canonical user object for the user with database id `<id>`.
 
 ### POST `/api/thetis/users/user/<id>`
@@ -170,14 +170,14 @@ Returns the canonical user object for the user with database id `<id>`.
 **UNIMPLEMENTED**
 
 `id` is a base-10 integer corresponding to the `db_id` of the user you wish to access.
-Requires an authentication token granting membership privileges to access any user that is not the user whose token was used to make the request.
+Requires an authentication token granting the requisite `user.modify.<field>(db_id)` privileged.
 Takes a parameter `update` containing a user object with one or more fields set. Updates those fields on the user with database id `<id>` and returns a canonical user object for that user.
 
 ### POST `/api/thetis/users/user/new`
 
 **UNIMPLEMENTED**
 
-Requires an authentication token granting membership privileges.
+Requires an authentication token granting `user.add`.
 Takes a parameter `user` which is a user object with all fields but `db_id` set. Adds the user to the database and returns the canonical user object representing them. 
 
 Other
