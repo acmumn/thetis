@@ -1,5 +1,6 @@
 //! Thetis is the ACM UMN website and nerve center.
 
+extern crate chrono;
 #[macro_use]
 extern crate diesel;
 #[macro_use]
@@ -26,6 +27,7 @@ extern crate tera;
 extern crate tokio;
 extern crate tokio_threadpool;
 extern crate url;
+extern crate uuid;
 #[macro_use]
 extern crate warp;
 
@@ -35,13 +37,12 @@ pub extern crate thetis_common as types;
 mod macros;
 
 pub mod api;
-mod auth;
+pub mod auth;
 mod context;
 mod db;
 pub mod errors;
 pub mod util;
 pub mod web;
 
-pub use auth::auth_check;
 pub use context::Context;
 pub use db::DB;

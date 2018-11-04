@@ -10,6 +10,7 @@ use warp::http::{Response, StatusCode};
 
 use types::AuthError;
 
+impl_trivial_WebError!(NoSuchUser, StatusCode::NOT_FOUND, "no_such_user");
 impl_WebError_for_Serialize!(AuthError, StatusCode::FORBIDDEN);
 
 impl WebError for ResolutionError {

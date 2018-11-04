@@ -17,7 +17,7 @@ use warp::{
 
 use errors::WebError;
 use types::AuthError;
-use {auth_check, Context};
+use {auth, Context};
 
 /// A filter that parses a JSON or form body.
 pub fn body<T: DeserializeOwned + Send>() -> impl Filter<Extract = (T,), Error = Rejection> + Copy {
@@ -28,8 +28,8 @@ pub fn body<T: DeserializeOwned + Send>() -> impl Filter<Extract = (T,), Error =
         header::CONTENT_TYPE.as_ref(),
         mime::APPLICATION_WWW_FORM_URLENCODED.as_ref(),
     ).and(warp::body::form())
-        .or(warp::body::json())
-        .unify()
+    .or(warp::body::json())
+    .unify()
 }
 
 /// A helper to check for capabilities in an `auth` cookie, failing if the cookie is not present.
@@ -40,7 +40,7 @@ pub fn capabilities<C: AsRef<str>, I: IntoIterator<Item = String>>(
 ) -> impl Future<Item = (), Error = impl WebError> + Send {
     if let Some(auth_cookie) = auth_cookie {
         let caps = caps.into_iter().collect::<HashSet<_>>();
-        Either::A(auth_check(ctx, auth_cookie.as_ref(), caps.clone()))
+        Either::A(auth::check(ctx, auth_cookie.as_ref(), caps.clone()))
     } else {
         Either::B(err(Coproduct::inject(AuthError::AuthTokenRequired)))
     }

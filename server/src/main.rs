@@ -107,7 +107,12 @@ struct Options {
     database_url: String,
 
     /// The host to serve on.
-    #[structopt(short = "H", long = "host", env = "HOST", default_value = "::")]
+    #[structopt(
+        short = "H",
+        long = "host",
+        env = "HOST",
+        default_value = "::"
+    )]
     host: String,
 
     /// The JWT HS512 secret.
@@ -115,11 +120,20 @@ struct Options {
     jwt_secret: String,
 
     /// The port to serve on.
-    #[structopt(short = "P", long = "port", env = "PORT", default_value = "8001")]
+    #[structopt(
+        short = "P",
+        long = "port",
+        env = "PORT",
+        default_value = "8001"
+    )]
     port: u16,
 
     /// The SMTP server to use.
-    #[structopt(long = "smtp-addr", env = "SMTP_ADDR", default_value = "smtp.gmail.com")]
+    #[structopt(
+        long = "smtp-addr",
+        env = "SMTP_ADDR",
+        default_value = "smtp.gmail.com"
+    )]
     smtp_addr: String,
 
     /// The SMTP From header to use.
@@ -144,7 +158,10 @@ struct Options {
 
     /// The directory to load web templates from.
     #[structopt(
-        short = "t", long = "templates", env = "TEMPLATE_DIR", default_value = "templates"
+        short = "t",
+        long = "templates",
+        env = "TEMPLATE_DIR",
+        default_value = "templates"
     )]
     template_dir: String,
 }
@@ -183,8 +200,7 @@ impl Options {
                 .level(console_ll)
                 .format(move |out, message, record| {
                     out.finish(format_args!("[{}] {}", record.level(), message))
-                })
-                .chain(std::io::stderr()),
+                }).chain(std::io::stderr()),
         );
 
         let fern = if self.quiet == 0 {
@@ -202,8 +218,7 @@ impl Options {
                     .or_else(|_| syslog::tcp(formatter.clone(), ("127.0.0.1", 601)))
                     .or_else(|_| {
                         syslog::udp(formatter.clone(), ("127.0.0.1", 0), ("127.0.0.1", 514))
-                    })
-                    .map_err(failure::SyncFailure::new)?
+                    }).map_err(failure::SyncFailure::new)?
             };
 
             fern.chain(Dispatch::new().level(syslog_ll).chain(syslog))

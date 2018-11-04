@@ -2,6 +2,7 @@ mod schema;
 
 use std::sync::Arc;
 
+use chrono::{DateTime, Utc};
 use diesel::{
     dsl::{exists, select},
     prelude::*,
@@ -11,15 +12,17 @@ use futures::{
     future::{err, poll_fn, Either},
     prelude::*,
 };
+use serde_json::Value;
 use tokio_threadpool::blocking;
+use uuid::Uuid;
 
 use db::schema::{
-    jwt_escrow, mail_member_subscriptions, mail_other_subscriptions, mail_send_queue,
-    mail_unsubscribes, mailing_list_templates, mailing_lists, member_bans, member_payments,
-    members, members_tag_join, tags,
+    jwt_escrow, mail_global_unsubscribes, mail_list_unsubscribes, mail_member_subscriptions,
+    mail_other_subscriptions, mail_send_queue, mail_templates, mailing_lists, member_bans,
+    member_payments, members, members_tag_join, tags,
 };
 use errors::DatabaseError;
-use types::{MemberID, Tag};
+use types::{MemberID, Tag, TemplateID};
 
 /// A pool of connections to the database.
 #[derive(Clone)]
@@ -32,6 +35,29 @@ impl DB {
     pub fn connect(database_url: &str) -> Result<DB, PoolError> {
         let pool = Arc::new(Pool::new(ConnectionManager::new(database_url))?);
         Ok(DB { pool })
+    }
+
+    /// Adds a new record to the escrow table, and returns the associated UUID.
+    pub fn add_escrow(&self, member: MemberID) -> impl Future<Item = Uuid, Error = DatabaseError> {
+        self.async_query(move |conn| {
+            unimplemented!();
+        })
+    }
+
+    /// Adds a message to the message send queue.
+    pub fn enqueue_mail(
+        &self,
+        template: TemplateID,
+        data: Value,
+        email: String,
+        subject: String,
+        send_after: DateTime<Utc>,
+        send_started: bool,
+        send_done: bool,
+    ) -> impl Future<Item = (), Error = DatabaseError> {
+        self.async_query(move |conn| {
+            unimplemented!();
+        })
     }
 
     /// Gets the tags associated with a member.
@@ -49,6 +75,22 @@ impl DB {
         })
     }
 
+    /// Gets the member ID associated with the given X.500.
+    pub fn get_memberid_from_x500(
+        &self,
+        x500: String,
+    ) -> impl Future<Item = Option<MemberID>, Error = DatabaseError> {
+        self.async_query(move |conn| {
+            members::table
+                .filter(members::x500.eq(&x500))
+                .select(members::id)
+                .first(conn)
+                .map(MemberID)
+                .optional()
+                .map_err(|e| e.into())
+        })
+    }
+
     /// Checks if a member has a given tag.
     pub fn has_tag(
         &self,
@@ -62,7 +104,7 @@ impl DB {
                     .filter(members_tag_join::member_id.eq(member))
                     .filter(tags::name.eq(tag.clone())),
             )).get_result(conn)
-                .map_err(|e| e.into())
+            .map_err(|e| e.into())
         })
     }
 

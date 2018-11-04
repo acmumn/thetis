@@ -1,0 +1,3 @@
+//! Mail-related functions.
+
+unimplemented!()

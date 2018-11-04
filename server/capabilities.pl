@@ -20,6 +20,7 @@ capAlsoExists(tags.delete).
 capAlsoExists(mail.send.queue_count).
 
 memberCap(auth.issue).
+memberCap(auth.login).
 memberCap(discord.access).
 memberCap(door.access).
 memberCap(website.access).

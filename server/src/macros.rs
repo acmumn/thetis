@@ -46,6 +46,21 @@ macro_rules! define_error {
     };
 }
 
+macro_rules! impl_trivial_WebError {
+    ($t:ident, $code:expr, { $($toks:tt)* }) => {
+        pub struct $t;
+        impl WebError for $t {
+            fn to_status_body(self) -> (StatusCode, Value) {
+                ($code, json!({ $($toks)* }))
+            }
+        }
+    };
+
+    ($t:ident, $code:expr, $typename:expr) => {
+        impl_trivial_WebError!($t, $code, { "type": $typename });
+    };
+}
+
 macro_rules! impl_WebError_for_Serialize {
     ($t:ty, $code:expr) => {
         impl WebError for $t {

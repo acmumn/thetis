@@ -4,6 +4,7 @@ name = "thetis"
 version = "0.1.0"
 
 [dependencies]
+chrono = "0.4.6"
 diesel = { version = "1.3.3", default_features = false, features = ["mysql", "r2d2", "serde_json"] }
 dotenv = "0.13.0"
 failure = "0.1.2"
@@ -29,4 +30,5 @@ thetis-common = { path = "../rust-common", features = ["diesel"] }
 tokio = "0.1.8"
 tokio-threadpool = "0.1.6"
 url = "1.7.1"
+uuid = "0.7.1"
 warp = "0.1.3"
